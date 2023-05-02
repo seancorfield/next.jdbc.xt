@@ -20,6 +20,7 @@ the various `next.jdbc` functions:
 ```clojure
   (require '[next.jdbc.plan :as plan]
            '[next.jdbc.sql :as sql]
+           '[next.jdbc.xt]
            '[xtdb.node :as xt.node])
 
   (def my-node (xt.node/start-node {:xtdb/server {:port 3001}}))
