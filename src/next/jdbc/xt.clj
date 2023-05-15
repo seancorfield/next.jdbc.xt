@@ -3,9 +3,9 @@
 (ns next.jdbc.xt
   (:require [clojure.core.reducers :as r]
             [clojure.string :as str]
+            [xtdb.api :as xt]
             [next.jdbc.protocols :as p]
-            [xtdb.node :as xt.node]
-            [xtdb.sql :as xt]))
+            [xtdb.node :as xt.node]))
 
 (extend-protocol p/Sourceable
   xtdb.node.Node
