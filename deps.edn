@@ -1,10 +1,12 @@
 {:mvn/repos {"ossrh-snapshots" {:url "https://s01.oss.sonatype.org/content/repositories/snapshots"}}
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        com.xtdb.labs/xtdb-api {:mvn/version "2.0.0-SNAPSHOT"}
-        com.xtdb.labs/xtdb-core {:mvn/version "2.0.0-SNAPSHOT"}
-        com.xtdb.labs/xtdb-http-server {:mvn/version "2.0.0-SNAPSHOT"}
-        com.xtdb.labs/xtdb-pgwire-server {:mvn/version "2.0.0-SNAPSHOT"}
-        com.github.seancorfield/next.jdbc {:mvn/version "1.3.874"}}
- ;; needed on JDK16+
- :aliases {:xtdb {:jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
-                             "-Dio.netty.tryReflectionSetAccessible=true"]}}}
+        com.xtdb/xtdb-api {:mvn/version "2.0.0-SNAPSHOT"}
+        com.github.seancorfield/next.jdbc {:mvn/version "1.3.909"}}
+ :aliases
+ {:xtdb
+  {:extra-deps {com.xtdb/xtdb-core {:mvn/version "2.0.0-SNAPSHOT"}}
+   ;; in-process: needed on JDK17+
+   :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
+              "-Dio.netty.tryReflectionSetAccessible=true"]}
+  :xtdb-client
+  {:extra-deps {com.xtdb/xtdb-http-client-clj {:mvn/version "2.0.0-SNAPSHOT"}}}}}
