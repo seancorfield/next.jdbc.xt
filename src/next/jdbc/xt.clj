@@ -45,14 +45,11 @@
                        (xt/with-op-args (rest sql-params)))]
                   opts)))
 
-(defonce ^:private implemented? (atom false))
-
 (defmacro for-node [& body]
   (try
     (require 'xtdb.node.impl)
     (Class/forName "xtdb.node.impl.Node")
     (Class/forName "xtdb.node.impl.SubmitNode")
-    (reset! implemented? true)
     `(do ~@body)
     (catch Exception _)))
 
@@ -95,7 +92,6 @@
   (try
     (require 'xtdb.client.impl)
     (Class/forName "xtdb.client.impl.XtdbClient")
-    (reset! implemented? true)
     `(do ~@body)
     (catch Exception _)))
 
@@ -121,8 +117,13 @@
    (-execute-all [this sql-params opts]
      (-execute-all* this sql-params opts))))
 
-(when-not @implemented?
-  (throw (Exception. "next.jdbc.xt requires xtdb.node or xtdb.client")))
+(try
+  (require 'xtdb.node.impl)
+  (catch Exception _
+    (try
+      (require 'xtdb.client.impl)
+      (catch Exception _
+        (throw (Exception. "next.jdbc.xt requires xtdb.node or xtdb.client"))))))
 
 (comment
   ;; Once you have a REPL (started with clj -A:xtdb if you’re on JDK 16+), you can create an in-memory XTDB node with:
