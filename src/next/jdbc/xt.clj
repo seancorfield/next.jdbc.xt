@@ -141,9 +141,16 @@
   (xt/status my-node)
 
   (sql/insert! my-node :person {:xt$id "sean/1" :name "Sean Corfield" :state "CA"})
+  (sql/insert! my-node :person {:xt$id "sean/1" :name "Sean Corfield" :state "TX"
+                                :xt$valid_from #inst "2024-01-08T22:01:30Z"
+                                :xt$valid_to #inst "2024-01-08T22:01:59Z"})
   (sql/query my-node ["SELECT p.xt$id, p.name FROM person p WHERE p.state = ?"
                       "CA"])
-  (sql/query my-node ["select * from person for all system_time"])
+  (sql/query my-node ["select p.name, p.xt$valid_from, p.xt$valid_to, p.xt$system_from, p.xt$system_to from person for all system_time as p"])
+  (sql/query my-node ["select p.*, p.xt$system_to from person for all system_time as p"])
+  (sql/query my-node ["select p.*, p.xt$system_to from person for all valid_time as p"])
+  (sql/query my-node ["select p.name, p.state, p.xt$valid_from, p.xt$valid_to, p.xt$system_from, p.xt$system_to from person for all valid_time as p order by p.xt$valid_from"])
+  (sql/query my-node ["select * from person for all valid_time"])
   (jdbc/execute! my-node ["select * from person"])
   (jdbc/execute-one! my-node ["select * from person"])
   (sql/insert! my-node :person {:xt$id "james/1" :name "James Rohen" :state "England"})
@@ -152,5 +159,6 @@
                       "England"])
   (sql/update! my-node :person {:name "James A Rohen"} {:person.xt$id "james/1"})
   (sql/delete! my-node :person {:person.xt$id "james/1"})
+  (sql/delete! my-node :person {:person.xt$id "sean/1"})
   (plan/select! my-node :name ["select p.name from person p"])
   )
