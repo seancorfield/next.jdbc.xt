@@ -4,7 +4,8 @@
   (:require [clojure.core.reducers :as r]
             [clojure.string :as str]
             [next.jdbc.protocols :as p]
-            [xtdb.api :as xt]))
+            [xtdb.api :as xt])
+  (:import [xtdb.api IXtdb]))
 
 (defn- is-query? [sql-params]
   (-> sql-params
@@ -39,85 +40,26 @@
           (assoc opts :args (rest sql-params)))
     (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
 
-(defmacro for-node [& body]
-  (try
-    (require 'xtdb.node.impl)
-    (Class/forName "xtdb.node.impl.Node")
-    (Class/forName "xtdb.node.impl.SubmitNode")
-    `(do ~@body)
-    (catch Exception _)))
+(extend-protocol p/Sourceable
+  IXtdb
+  (get-datasource [this] this))
 
-(for-node
- (extend-protocol p/Sourceable
-   xtdb.node.impl.Node
-   (get-datasource [this] this)
-   xtdb.node.impl.SubmitNode
-   (get-datasource [this] this))
+(extend-protocol p/Connectable
+  IXtdb
+  (get-connection [this _opts] this))
 
- (extend-protocol p/Connectable
-   xtdb.node.impl.Node
-   (get-connection [this _opts] this)
-   xtdb.node.impl.SubmitNode
-   (get-connection [this _opts] this))
+(extend-protocol p/Transactable
+  IXtdb
+  (-transact [this body-fn _opts] (body-fn this)))
 
- (extend-protocol p/Transactable
-   xtdb.node.impl.Node
-   (-transact [this body-fn _opts] (body-fn this))
-   xtdb.node.impl.SubmitNode
-   (-transact [this body-fn _opts] (body-fn this)))
-
- (extend-protocol p/Executable
-   xtdb.node.impl.Node
-   (-execute [this sql-params opts]
-     (-execute* this sql-params opts))
-   (-execute-one [this sql-params opts]
-     (-execute-one* this sql-params opts))
-   (-execute-all [this sql-params opts]
-     (-execute-all* this sql-params opts))
-   xtdb.node.impl.SubmitNode
-   (-execute [this sql-params opts]
-     (-execute* this sql-params opts))
-   (-execute-one [this sql-params opts]
-     (-execute-one* this sql-params opts))
-   (-execute-all [this sql-params opts]
-     (-execute-all* this sql-params opts))))
-
-(defmacro for-client [& body]
-  (try
-    (require 'xtdb.client.impl)
-    (Class/forName "xtdb.client.impl.XtdbClient")
-    `(do ~@body)
-    (catch Exception _)))
-
-(for-client
- (extend-protocol p/Sourceable
-   xtdb.client.impl.XtdbClient
-   (get-datasource [this] this))
-
- (extend-protocol p/Connectable
-   xtdb.client.impl.XtdbClient
-   (get-connection [this _opts] this))
-
- (extend-protocol p/Transactable
-   xtdb.client.impl.XtdbClient
-   (-transact [this body-fn _opts] (body-fn this)))
-
- (extend-protocol p/Executable
-   xtdb.client.impl.XtdbClient
-   (-execute [this sql-params opts]
-     (-execute* this sql-params opts))
-   (-execute-one [this sql-params opts]
-     (-execute-one* this sql-params opts))
-   (-execute-all [this sql-params opts]
-     (-execute-all* this sql-params opts))))
-
-(try
-  (require 'xtdb.node.impl)
-  (catch Exception _
-    (try
-      (require 'xtdb.client.impl)
-      (catch Exception _
-        (throw (Exception. "next.jdbc.xt requires xtdb.node or xtdb.client"))))))
+(extend-protocol p/Executable
+  IXtdb
+  (-execute [this sql-params opts]
+    (-execute* this sql-params opts))
+  (-execute-one [this sql-params opts]
+    (-execute-one* this sql-params opts))
+  (-execute-all [this sql-params opts]
+    (-execute-all* this sql-params opts)))
 
 (comment
   ;; Once you have a REPL (started with clj -A:xtdb if you’re on JDK 16+), you can create an in-memory XTDB node with:
