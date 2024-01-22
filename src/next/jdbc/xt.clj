@@ -30,20 +30,14 @@
      (xt/q this
            (first sql-params)
            (assoc opts :args (rest sql-params))))
-    (xt/submit-tx this
-                  [(-> (xt/sql-op (first sql-params))
-                       (xt/with-op-args (rest sql-params)))]
-                  opts)))
+    (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
 
 (defn- -execute-all* [this sql-params opts]
   (if (is-query? sql-params)
     (xt/q this
           (first sql-params)
           (assoc opts :args (rest sql-params)))
-    (xt/submit-tx this
-                  [(-> (xt/sql-op (first sql-params))
-                       (xt/with-op-args (rest sql-params)))]
-                  opts)))
+    (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
 
 (defmacro for-node [& body]
   (try
