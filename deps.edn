@@ -9,4 +9,4 @@
    :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
               "-Dio.netty.tryReflectionSetAccessible=true"]}
   :xtdb-client
-  {:extra-deps {com.xtdb/xtdb-http-client-clj {:mvn/version "2.0.0-SNAPSHOT"}}}}}
+  {:extra-deps {com.xtdb/xtdb-http-client-jvm {:mvn/version "2.0.0-SNAPSHOT"}}}}}
