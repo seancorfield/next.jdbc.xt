@@ -1,5 +1,8 @@
 # CHANGELOG
 
+2024-02-22
+* Reverted most of the previous change because it was susceptible to order of compilation problems with the protocol extensions. NOTE: round-tripping of SQL is BROKEN since SQL requires `xt$id` and `first_name` (unquoted) but returns `:xt/id` and `:first-name`.
+
 2024-02-03 f5ca836a9126b351183d1018dcd0d731d93debea
 * Updated to latest XTDB 2 snapshots, which changed the client artifact name and a lot of the internals that `next.jdbc.xt` previously relied on via PR [#6](https://github.com/seancorfield/next.jdbc.xt/pull/6) from [@jarohen](https://github.com/jarohen).
 

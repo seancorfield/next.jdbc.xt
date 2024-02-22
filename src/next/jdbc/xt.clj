@@ -1,4 +1,4 @@
-;; copyright (c) 2023 sean corfield, all rights reserved
+;; copyright (c) 2023-2024 sean corfield, all rights reserved
 
 (ns next.jdbc.xt
   (:require [clojure.core.reducers :as r]
@@ -43,7 +43,6 @@
   (try
     (require 'xtdb.node.impl)
     (Class/forName "xtdb.node.impl.Node")
-    (Class/forName "xtdb.node.impl.SubmitNode")
     `(do ~@body)
     (catch Exception _)))
 
@@ -51,19 +50,16 @@
  (extend-protocol p/Sourceable
    xtdb.node.impl.Node
    (get-datasource [this] this)
-   xtdb.node.impl.SubmitNode
    (get-datasource [this] this))
 
  (extend-protocol p/Connectable
    xtdb.node.impl.Node
    (get-connection [this _opts] this)
-   xtdb.node.impl.SubmitNode
    (get-connection [this _opts] this))
 
  (extend-protocol p/Transactable
    xtdb.node.impl.Node
    (-transact [this body-fn _opts] (body-fn this))
-   xtdb.node.impl.SubmitNode
    (-transact [this body-fn _opts] (body-fn this)))
 
  (extend-protocol p/Executable
@@ -74,7 +70,6 @@
      (-execute-one* this sql-params opts))
    (-execute-all [this sql-params opts]
      (-execute-all* this sql-params opts))
-   xtdb.node.impl.SubmitNode
    (-execute [this sql-params opts]
      (-execute* this sql-params opts))
    (-execute-one [this sql-params opts]
@@ -130,6 +125,7 @@
   (def my-node (xtn/start-node {}))
   (def my-node (xtc/start-client "http://localhost:3000"))
   (.close my-node)
+  ((juxt type (comp ancestors type)) my-node)
 
   ;; Confirm this API call returns successfully
   (xt/status my-node)
@@ -152,7 +148,9 @@
   (sql/query my-node ["SELECT p.xt$id, p.name FROM person p WHERE p.state = ?"
                       "England"])
   (sql/update! my-node :person {:name "James A Rohen"} {:person.xt$id "james/1"})
+  (plan/select! my-node :name ["select p.name from person p"])
   (sql/delete! my-node :person {:person.xt$id "james/1"})
+  (plan/select! my-node :name ["select p.name from person p"])
   (sql/delete! my-node :person {:person.xt$id "sean/1"})
   (plan/select! my-node :name ["select p.name from person p"])
   )
