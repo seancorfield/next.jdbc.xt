@@ -1,6 +1,6 @@
 # CHANGELOG
 
-2024-02-22
+2024-02-22 e8b8659c78425e9bfd72074babbda2470a96df47
 * Reverted most of the previous change because it was susceptible to order of compilation problems with the protocol extensions. NOTE: round-tripping of SQL is BROKEN since SQL requires `xt$id` and `first_name` (unquoted) but returns `:xt/id` and `:first-name`.
 
 2024-02-03 f5ca836a9126b351183d1018dcd0d731d93debea
