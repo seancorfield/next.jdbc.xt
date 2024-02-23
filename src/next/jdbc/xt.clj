@@ -3,6 +3,7 @@
 (ns next.jdbc.xt
   (:require [clojure.core.reducers :as r]
             [clojure.string :as str]
+            [clojure.walk :as walk]
             [next.jdbc.protocols :as p]
             [xtdb.api :as xt]))
 
@@ -26,17 +27,23 @@
 
 (defn- -execute-one* [this sql-params opts]
   (if (is-query? sql-params)
-    (first
-     (xt/q this
-           (first sql-params)
-           (assoc opts :args (rest sql-params))))
+    (-> (xt/q this
+              (first sql-params)
+              (assoc opts
+                     :args (rest sql-params)
+                     :key-fn :snake-case-string))
+        (first)
+        (walk/keywordize-keys))
     (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
 
 (defn- -execute-all* [this sql-params opts]
   (if (is-query? sql-params)
-    (xt/q this
-          (first sql-params)
-          (assoc opts :args (rest sql-params)))
+    (-> (xt/q this
+              (first sql-params)
+              (assoc opts
+                     :args (rest sql-params)
+                     :key-fn :snake-case-string))
+        (walk/keywordize-keys))
     (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
 
 (defmacro for-node [& body]
@@ -137,6 +144,7 @@
   (sql/query my-node ["SELECT p.xt$id, p.name FROM person p WHERE p.state = ?"
                       "CA"])
   (sql/query my-node ["select p.name, p.xt$valid_from, p.xt$valid_to, p.xt$system_from, p.xt$system_to from person for all system_time as p"])
+  (sql/query my-node ["select \"p\".\"name\", \"p\".\"xt/valid-from\", \"p\".\"xt/valid-to\", \"p\".\"xt/system-from\", \"p\".\"xt/system-to\" from \"person\" for all system_time as \"p\""])
   (sql/query my-node ["select p.*, p.xt$system_to from person for all system_time as p"])
   (sql/query my-node ["select p.*, p.xt$system_to from person for all valid_time as p"])
   (sql/query my-node ["select p.name, p.state, p.xt$valid_from, p.xt$valid_to, p.xt$system_from, p.xt$system_to from person for all valid_time as p order by p.xt$valid_from"])
