@@ -9,7 +9,7 @@ Add this library as a git dependency:
 
 ```clojure
   io.github.seancorfield/next.jdbc.xt
-  {:git/sha "e8b8659c78425e9bfd72074babbda2470a96df47"}
+  {:git/sha "43c73029c5aa988edd8da373ae3e07e8f5c2816c"}
 ```
 
 Require `next.jdbc.xt` to enable the `next.jdbc` protocol definitions for XTDB.

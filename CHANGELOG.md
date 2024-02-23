@@ -1,6 +1,6 @@
 # CHANGELOG
 
-2024-02-23
+2024-02-23 43c73029c5aa988edd8da373ae3e07e8f5c2816c
 * Queries now pass `:key-fn :snake-case-string` to `xt/q` and then call `clojure.walk/keywordize-keys` on the result, which produces data that will round-trip through HoneySQL and `next.jdbc`.
 * Updated to latest XTDB 2 snapshots, which changed the client artifact name, the default result format (keys), and some of the internals that `next.jdbc.xt` previously relied on via PR [#6](https://github.com/seancorfield/next.jdbc.xt/pull/6) from [@jarohen](https://github.com/jarohen).
 
