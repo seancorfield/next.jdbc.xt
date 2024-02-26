@@ -1,131 +1,29 @@
 ;; copyright (c) 2023-2024 sean corfield, all rights reserved
 
 (ns next.jdbc.xt
-  (:require [clojure.core.reducers :as r]
-            [clojure.string :as str]
-            [clojure.walk :as walk]
-            [next.jdbc.protocols :as p]
-            [xtdb.api :as xt]))
-
-(defn- is-query? [sql-params]
-  (-> sql-params
-      (first)
-      (str/trim)
-      (str/upper-case)
-      (str/starts-with? "SELECT")))
-
-(defn- -execute* [this sql-params opts]
-  (reify
-    clojure.lang.IReduceInit
-    (reduce [_ f init]
-      (reduce f init (p/-execute-all this sql-params opts)))
-    r/CollFold
-    (coll-fold [_ n combinef reducef]
-      (r/fold n combinef reducef
-              (p/-execute-all this sql-params opts)))
-    (toString [_] "`IReduceInit` from `plan` -- missing reduction?")))
-
-(defn- -execute-one* [this sql-params opts]
-  (if (is-query? sql-params)
-    (-> (xt/q this
-              (first sql-params)
-              (assoc opts
-                     :args (rest sql-params)
-                     :key-fn :snake-case-string))
-        (first)
-        (walk/keywordize-keys))
-    (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
-
-(defn- -execute-all* [this sql-params opts]
-  (if (is-query? sql-params)
-    (-> (xt/q this
-              (first sql-params)
-              (assoc opts
-                     :args (rest sql-params)
-                     :key-fn :snake-case-string))
-        (walk/keywordize-keys))
-    (xt/submit-tx this [[:sql (first sql-params) (rest sql-params)]] opts)))
-
-(defmacro for-node [& body]
-  (try
-    (require 'xtdb.node.impl)
-    (Class/forName "xtdb.node.impl.Node")
-    `(do ~@body)
-    (catch Exception _)))
-
-(for-node
- (extend-protocol p/Sourceable
-   xtdb.node.impl.Node
-   (get-datasource [this] this)
-   (get-datasource [this] this))
-
- (extend-protocol p/Connectable
-   xtdb.node.impl.Node
-   (get-connection [this _opts] this)
-   (get-connection [this _opts] this))
-
- (extend-protocol p/Transactable
-   xtdb.node.impl.Node
-   (-transact [this body-fn _opts] (body-fn this))
-   (-transact [this body-fn _opts] (body-fn this)))
-
- (extend-protocol p/Executable
-   xtdb.node.impl.Node
-   (-execute [this sql-params opts]
-     (-execute* this sql-params opts))
-   (-execute-one [this sql-params opts]
-     (-execute-one* this sql-params opts))
-   (-execute-all [this sql-params opts]
-     (-execute-all* this sql-params opts))
-   (-execute [this sql-params opts]
-     (-execute* this sql-params opts))
-   (-execute-one [this sql-params opts]
-     (-execute-one* this sql-params opts))
-   (-execute-all [this sql-params opts]
-     (-execute-all* this sql-params opts))))
-
-(defmacro for-client [& body]
-  (try
-    (require 'xtdb.client.impl)
-    (Class/forName "xtdb.client.impl.XtdbClient")
-    `(do ~@body)
-    (catch Exception _)))
-
-(for-client
- (extend-protocol p/Sourceable
-   xtdb.client.impl.XtdbClient
-   (get-datasource [this] this))
-
- (extend-protocol p/Connectable
-   xtdb.client.impl.XtdbClient
-   (get-connection [this _opts] this))
-
- (extend-protocol p/Transactable
-   xtdb.client.impl.XtdbClient
-   (-transact [this body-fn _opts] (body-fn this)))
-
- (extend-protocol p/Executable
-   xtdb.client.impl.XtdbClient
-   (-execute [this sql-params opts]
-     (-execute* this sql-params opts))
-   (-execute-one [this sql-params opts]
-     (-execute-one* this sql-params opts))
-   (-execute-all [this sql-params opts]
-     (-execute-all* this sql-params opts))))
+  "Require this to automatically load support for
+   either the in-memory Node or the HTTP XtdbClient.")
 
 (try
-  (require 'xtdb.node.impl)
+  (require 'xtdb.node)
+  (require 'next.jdbc.xt-node)
   (catch Exception _
     (try
-      (require 'xtdb.client.impl)
+      (require 'xtdb.client)
       (catch Exception _
         (throw (Exception. "next.jdbc.xt requires xtdb.node or xtdb.client"))))))
+
+(try
+  (require 'xtdb.client)
+  (require 'next.jdbc.xt-client)
+  (catch Exception _))
 
 (comment
   ;; Once you have a REPL (started with clj -A:xtdb if you’re on JDK 16+), you can create an in-memory XTDB node with:
   (require '[next.jdbc :as jdbc]
            '[next.jdbc.plan :as plan]
-           '[next.jdbc.sql :as sql])
+           '[next.jdbc.sql :as sql]
+           '[xtdb.api :as xt])
   (require '[xtdb.node :as xtn])
   (require '[xtdb.client :as xtc]) ; requires clj -A:xtdb-client & JDK 11+
 
