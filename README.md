@@ -1,5 +1,13 @@
 # next.jdbc.xt
 
+**No longer maintained.** This library was an experiment in making XTDB 2.0
+look like a regular JDBC database via extensions to `next.jdbc` that
+mapped the JDBC-based API onto the XTDB API. XTDB 2.0 is implementing
+pgwire and will be able to use the PostgreSQL driver directly, so this
+library is no longer needed.
+
+## Original README follows
+
 Experimental extension of
 [`next.jdbc`](https://github.com/seancorfield/next-jdbc)
 to work with
